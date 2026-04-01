@@ -1,71 +1,109 @@
-import re
-
 import pandas as pd
+import numpy as np
+import re
+#from .data_cleaning import extract_data
 
 
-IMPORTANT_BINARY_FEATURES = {
-    "has_parking": r"\bكراج\b",
-    "has_elevator": r"\bمصعد\b",
-    "has_storage": r"\bمخزن\b",
-    "has_balcony": r"بلكون(?:ه|ات)?",
-    "has_terrace": r"\bترس\b",
-    "has_maid_room": r"غرفه\s*خادمه|\bخادمه\b",
-    "has_laundry_room": r"غرفه\s*غسيل|\bغسيل\b",
-    "has_central_ac": r"تكييف\s*مركزي",
-    "has_ac_units": r"وحدات\s*تكييف|تكييف\s*وحدات",
-    "has_heating": r"تدفيه|تدفئه|تدفئ",
-    "has_built_in_kitchen": r"مطبخ\s*راكب",
-    "has_wardrobes": r"خزاين(?:\s*بالحايط)?|خزائن(?:\s*بالحائط)?",
-    "has_double_glazing": r"زجاج\s*دبل",
-    "has_security_doors": r"ابواب\s*امان",
-    "has_cctv": r"كاميرات\s*مراقبه",
-    "has_hidden_lighting": r"اناره\s*مخفيه|سبوت\s*لايت|اناره\s*led",
-    "has_deluxe_finish": r"تشطيبات\s*(?:سوبر\s*)?ديلوكس|تشطيبات\s*سوبرديلوكس",
-}
-
-
-def normalize_listing_text(text):
+def normalize_text(text):
     if pd.isna(text):
-        return ""
+        return ''
+    return re.sub(r'\s+',' ',str(text)).strip()
 
-    text = str(text)
-    replacements = {
-        "أ": "ا",
-        "إ": "ا",
-        "آ": "ا",
-        "ة": "ه",
-        "ى": "ي",
-        "ؤ": "و",
-        "ئ": "ي",
-        "ـ": " ",
-        "ndash;": "-",
-        "–": "-",
-        "—": "-",
-        "+": " ",
-        "*": " ",
-    }
-
-    for source, target in replacements.items():
-        text = text.replace(source, target)
-
-    text = re.sub(r"[^\w\s\-]", " ", text, flags=re.UNICODE)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-
-def build_text_column(df, description_col="Description", specialities_col="Specialities"):
-    description = df.get(description_col, pd.Series("", index=df.index)).fillna("")
-    specialities = df.get(specialities_col, pd.Series("", index=df.index)).fillna("")
-
-    text = (description.astype(str) + " " + specialities.astype(str)).str.strip()
-    return text.apply(normalize_listing_text)
-
-
-def add_binary_features(df):
+def combine_text_columns(df):
     df = df.copy()
-    df["text"] = build_text_column(df)
-
-    for column_name, pattern in IMPORTANT_BINARY_FEATURES.items():
-        df[column_name] = df["text"].str.contains(pattern, regex=True, na=False).astype("int64")
-
+    df['text'] = (df['Description'] + ' ' + df['Specialities']).apply(normalize_text)
     return df
+
+def extract_binary_features(df):
+    df = df.copy()
+
+    df['has_elevator'] = df['text'].str.contains(r'مصعد').astype(int)
+    df['has_parking'] = df['text'].str.contains(r'كراج').astype(int)
+    df['has_storage'] = df['text'].str.contains(r'مخزن').astype(int)
+    df['has_balcony'] = df['text'].str.contains(r'بلكونة|بلكون|بلكونه',regex=True)\
+        .astype(int)
+    df['has_garden'] = df['text'].str.contains(r'حديقة').astype(int)
+    df['has_gym'] = df['text'].str.contains(r'جيم|صالة\s*رياضية|نادي\s*رياضي',regex=True)\
+        .astype(int)
+    df['has_living_room'] = df['text'].str.contains(r'غرفة\s*معيشة|غرفة\s*معيشه',regex=True)\
+        .astype(int)
+    df['has_kitchen'] = df['text'].str.contains(r'مطبخ').astype(int)
+    df['has_laundry_room'] = df['text'].str.contains(r'غرفة غسيل|غرفة\s*غسيل|غسيل')\
+        .astype(int)
+    df['has_heating'] = df['text'].str.contains( r'تدفئة|تدفئة\s*مركزية|تدفئة\s*تحت\s*البلاط'\
+                                                ,regex=True).astype(int)
+    df['has_AC'] = df['text'].str.contains(r'تكييف|تكييف\s*مركزي|وحدات\s*تكييف',regex=True)\
+        .astype(int)
+    df['has_security_doors'] = df['text'].str.contains\
+        ( r'ابواب\s*امان|أبواب\s*أمان|باب\s*امان|باب\s*أمان',regex=True).astype(int)
+    return df
+
+def create_numerical_features(df):
+    df = df.copy()
+
+    df['Price_per_sqm'] = df['Final_price'].div(df['Area_sqm'],fill_value=np.nan)
+    return df
+
+def extract_salons(text):
+    if pd.isna(text):
+        return 0
+    
+    patterns = [
+        r'(\d+)\s*صالون',
+        r'صالون\s*عدد\s*(\d+)'
+
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern,str(text))
+        if match:
+            return int(match.group(1))
+    if re.search(r'\bصالون\b',str(text)):
+        return 1
+    return 0
+
+def extract_master_bedroom(text):
+    if pd.isna(text):
+        return 0
+    patterns = [
+        r'ماستر\s*عدد\s*(\d+)',
+        r'(\d+)\s*ماستر',
+        r'\((\d+)\s*ماستر\)',
+        r'\(ماستر\s*(\d+)\)',
+        r'\(ماستر\s*عدد\s*(\d+)\)'
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern=pattern,
+                          string=str(text))
+        if match:
+            return int(match.group(1))
+    if re.search(pattern=r'غرفة\s*نوم\s*ماستر|نوم\s*ماستر',string=str(text)):
+        return 1
+    return 0
+
+def extract_advanced_count_features(df):
+    df = df.copy()
+    df['Salons'] = df['text'].apply(extract_salons)
+    df['Master_bedrooms'] = df['text'].apply(extract_master_bedroom)
+    return df
+
+def extract_full_location_features(df):
+    df = df.copy()
+    df[['Area','City','Country']] = df['Location'].str.split(',',expand=True,n=2)
+    df['Area'] = df['Area'].str.strip()
+    df['City'] = df['City'].str.strip()
+    df['Country'] = df['Country'].str.strip()
+    return df
+
+def feature_engineering_pipeline(df):
+    df = combine_text_columns(df)
+    df = extract_binary_features(df)
+    df = create_numerical_features(df)
+    df = extract_advanced_count_features(df)
+    df = extract_full_location_features(df)
+    return df
+
+
+
+
