@@ -1,0 +1,139 @@
+ Project Notes:
+
+I have collected the data using scrapy from homes jordan website
+I need to build a content-based recommendation system
+to build a recommender, I need to extract features from the data and compute similarities using cosine similarity or TF-IDF
+
+As ML engineer in the project I am responsible of:
+   - Data requirements
+   - Feature engineering
+   - Model selection
+   - Evaluation
+   - Deployment and integration
+   - Scalability Plan (I need to understand if it is needed since the data is a csv file)
+The main data needed for the system is a property data
+
+
+ML Pipeline (my workflow):
+1- Data collection
+2- Data Cleaning and Prepararion 
+3- Feature Engineering
+  * Feature extraction
+4- Building the Recommendation model
+5- testing the recommendations (Evaluation)
+6- Deploying / integration with the platform
+
+The recommendation engine workflow:
+Apartment A -->
+ compare with all apartments --> 
+find most similar ones  --> 
+return top N recommendations
+
+
+Data Processing workflow:
+Data inspection
+Data cleaning pipeline
+Feature engineering
+Feature matrix creation
+
+After data processing is finished:
+ similarity matrix will be built using Cosine Similarity
+then a recommendation function will be built to return recommendations
+ 
+ since the data contains rent and sale listing types then the recommendation engine must return recommendations based on the listing type, if the user reviews a rent type property then the system must recommend similar rent properties and the same logic for the sale listing type 
+
+things I need to learn
+feaure vectors
+Feature matrix
+Dynamic production system
+static dataset project
+
+
+
+The type of the recommendation engine that I need to build is a content-based engine that depends on:
+   - Users Preferences
+   - Similarity between features
+Technically I will use:
+   - Cosine Similarity
+   - Feature scaling
+   - One-hot-encoding
+   - TF-IDF
+Data cleaning pipeline
+Feature engineering
+Similarity engine ---> I need to know how to build that and what I need
+system integration with the website --> how to do that
+system evaluation --> how to evaluate 
+the ML model will operate on the same source of truth, The data shown on the website will be the data that the model will read from
+The vector database is not needed because the data is structured and we will use the cosine similarity, sklearn and store a feature matrix 
+
+offline ML model --> (batch processing) the similarities are computed at specific times and the recommendations will be stored already
+online model --> the similarities will be computed whenever the user enters the website 
+Mock data generator for the pictures 
+There are two ways to integrate the recommendation engine with the website:
+  1- compute the recommendations and save them 
+  2- compute recommendations whenever the user reviwes a property
+
+
+
+The production Database:
+
+the data I collected will be stored on the websit, and the frontend will request it via API 
+and the model does not require to get data from the database because I have the data in a csv file aleady and it is the same data that that will be shown on the website 
+
+I dont need data from the production DB because I will train the model on the csv file which is the same data that will be stored in the database, and I dont need DB data because I will train the model one time and the data will not be changed, but whenever there will be a change in the data then I need to get access for the database and retrain the model on the new data, but any new data must be in the same schema so everything will work correctly
+
+since I have a data cleaning pipeline and I am going to write a feature engineering script  and the data that I will train the model on is the same database data, I wonder that I have two options, one to train the model now and the recommendation results will be already available and the backend will call it or I can read the data from the database and apply the pipeline on it and then return the recommnedations 
+
+
+The recommendation engine will recommend on the data that it was trained on and the model learns feature representation of the items it recommends
+
+if a new data is added then the model needs to get trained on it and this training for any new data added can be schedueled to operate at specific tiems (Periodic retraining)
+
+or the similarity can be computed directly from features without the need of retraining 
+
+
+The goal of the project is a content-based recommendation engine, and it will compare properties based on the features (location,Bedrooms,Bathrooms,area,price,listing type,etc.)
+
+the data that will be stored and shown on the website does not need to be cleaned 
+
+since that the data will not be changed and it is a static datset project, then the pipeline will be 
+Dataset --> cleaning --> feature engineering --> similarity matrix --> saved model --> API --> website
+
+the professional pipeline is:
+raw data --> data cleaning --> Feature score --> model training --> model serving
+
+
+for the prices columns and the bathrooms and the bedrooms columns I have applied featurs recovery by extracting the values formt eh description AND THE specialities columns to reduce the missing valued from these columns 
+
+
+for feature engineering I will:
+use one-hot encoding on the categorical features such as (floor, floor type)
+
+
+The recommendation engine will show similar apartments in the same area from the same listing type 
+filter by area then compute similarity, this is called a two stage recommendation engine
+
+I will take into consideration to build a model fro rent liting type and a model for sale listing type
+
+Feature Engineering workflow:
+this stage is converting the clean data to a machine learning ready to use data
+
+first of all I need to decide the recommendaition input
+
+The most important features that we need to build:
+1- Feature engineering:
+price per sqm
+text combination
+Binary features
+Numeric features scaling
+
+2- Vectorization
+3- Similarity
+4- Recommendation function ( Hybrid Content-Based)
+
+best reccomendation for the project is location + features + price + Text
+
+feature weighting because we need to determine the most important features for the model
+The code needs to be consistent and reproducable 
+I need to make sklearn pipeline for code to be organized and fpr reproducability 
+Feature engineering stage:
