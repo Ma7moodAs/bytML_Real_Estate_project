@@ -177,3 +177,5 @@ def clean_data(df):
     df = missing_values_handling(df)
     df = fix_dtypes(df)
     return df
+
+

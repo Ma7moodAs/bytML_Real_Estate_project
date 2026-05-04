@@ -132,3 +132,5 @@ def get_similar_properties(
     recommendations["similarity_score"] = [score for _, score in top_matches]
 
     return recommendations.reset_index(drop=True)
+
+
