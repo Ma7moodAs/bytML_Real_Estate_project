@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+.env
+venv/
+recommender_system/data/user_listings.csv

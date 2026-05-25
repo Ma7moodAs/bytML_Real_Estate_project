@@ -73,7 +73,7 @@ def _same_city_candidates(df, source_row):
     return _same_listing_type_candidates(df, source_row) & (df["City"] == source_row["City"])
 
 
-def get_candidate_mask(df, source_index, prefer_same_area=True):
+def get_candidate_mask(df, source_index, prefer_same_area=True, min_candidates=1):
     source_row = df.loc[source_index]
     base_mask = _same_listing_type_candidates(df, source_row)
 
@@ -81,11 +81,11 @@ def get_candidate_mask(df, source_index, prefer_same_area=True):
         return base_mask
 
     area_mask = _same_area_candidates(df, source_row)
-    if area_mask.sum() > 1:
+    if area_mask.sum() > min_candidates:
         return area_mask
 
     city_mask = _same_city_candidates(df, source_row)
-    if city_mask.sum() > 1:
+    if city_mask.sum() > min_candidates:
         return city_mask
 
     return base_mask
@@ -108,7 +108,12 @@ def get_similar_properties(
     result_columns=None,
 ):
     source_index = _resolve_source_index(engineered_df, item_id, identifier_col=identifier_col)
-    candidate_mask = get_candidate_mask(engineered_df, source_index, prefer_same_area=prefer_same_area)
+    candidate_mask = get_candidate_mask(
+        engineered_df,
+        source_index,
+        prefer_same_area=prefer_same_area,
+        min_candidates=top_n,
+    )
     candidate_indices = engineered_df.index[candidate_mask].tolist()
 
     if source_index in candidate_indices:
@@ -132,5 +137,4 @@ def get_similar_properties(
     recommendations["similarity_score"] = [score for _, score in top_matches]
 
     return recommendations.reset_index(drop=True)
-
 

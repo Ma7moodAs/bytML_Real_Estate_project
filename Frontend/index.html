@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bytML Real Estate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="#listings" aria-label="bytML home">
+      <img class="brand-logo" src="./assets/images/bytML.png" alt="bytML logo" />
+    </a>
+    <nav class="nav-actions" aria-label="Primary navigation">
+      <button class="ghost-button" id="homeButton" type="button" data-i18n="nav.home">Home</button>
+      <button class="ghost-button" id="showMapButton" type="button" data-i18n="nav.map">Search by map</button>
+      <button class="ghost-button" id="showListingsButton" type="button" data-i18n="nav.listings">Listings</button>
+      <button class="primary-button" id="showAddListingButton" type="button" data-i18n="nav.addListing">Add
+        listing</button>
+      <button class="ghost-button" id="themeToggleButton" type="button" data-i18n="nav.themeLight">Light mode</button>
+      <label class="language-select-wrap" for="languageSelect">
+        <span class="sr-only" data-i18n="nav.language">Language</span>
+        <select id="languageSelect" class="language-select">
+          <option value="en" data-i18n="lang.english">English</option>
+          <option value="ar" data-i18n="lang.arabic">العربية</option>
+        </select>
+      </label>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow" data-i18n="hero.eyebrow">Apartments in Jordan</p>
+        <h1 id="heroTitle" data-i18n="hero.title">Find a place that fits the way you live.</h1>
+        <p data-i18n="hero.subtitle">
+          Browse rental and sale apartments, filter by area, and explore similar homes
+          from bytML's content-based recommendation engine.
+        </p>
+      </div>
+    </section>
+
+    <section class="workspace" id="listings">
+      <aside class="filter-panel" aria-label="Listing filters">
+        <div>
+          <p class="section-kicker" data-i18n="filters.kicker">Search</p>
+          <h2 data-i18n="filters.title">Filters</h2>
+        </div>
+
+        <label>
+          <span data-i18n="filters.listingType">Listing type</span>
+          <select id="listingTypeFilter">
+            <option value="" data-i18n="filters.allListings">All listings</option>
+          </select>
+        </label>
+
+        <label>
+          <span data-i18n="filters.area">Area</span>
+          <select id="areaFilter">
+            <option value="" data-i18n="filters.allAreas">All areas</option>
+          </select>
+        </label>
+
+        <button class="secondary-button" id="resetFiltersButton" type="button" data-i18n="filters.reset">Reset
+          filters</button>
+      </aside>
+
+      <section class="listing-section" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker" data-i18n="inventory.kicker">Inventory</p>
+            <h2 data-i18n="inventory.title">Available apartments</h2>
+          </div>
+          <p id="listingCount" class="muted"></p>
+        </div>
+        <div class="listing-grid" id="listingGrid"></div>
+      </section>
+    </section>
+
+    <section class="details-view hidden" id="detailsView" aria-live="polite">
+      <button class="ghost-button back-button" id="backToListingsButton" type="button"
+        data-i18n="details.backToListings">Back to listings</button>
+      <div class="details-layout">
+        <article class="details-card" id="propertyDetails"></article>
+      </div>
+      <section class="recommendations-panel recommendations-below">
+        <div class="section-heading compact">
+          <div>
+            <p class="section-kicker" data-i18n="details.similarHomes">Similar homes</p>
+            <h2 data-i18n="details.recommendations">Recommendations</h2>
+          </div>
+        </div>
+        <div class="recommendation-slider" id="recommendationSlider">
+          <div id="recommendationList" class="recommendation-list"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="map-view hidden" id="mapView" aria-live="polite">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker" data-i18n="map.kicker">Explore</p>
+          <h2 data-i18n="map.title">Find properties on Jordan map</h2>
+        </div>
+      </div>
+
+      <label class="map-global-search">
+        <span class="sr-only" data-i18n="map.searchMapLabel">Search map location</span>
+        <input id="mapSearchInput" type="text" data-i18n-placeholder="map.searchMapPlaceholder" placeholder="Search location on map" />
+      </label>
+
+      <div class="map-layout">
+        <aside class="map-panel">
+          <div id="mapPropertyList" class="map-property-list"></div>
+        </aside>
+        <div class="map-canvas-wrap">
+          <div id="mapCanvas" class="map-canvas" role="application" aria-label="Jordan property map"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="add-listing hidden" id="addListingView">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker" data-i18n="add.kicker">Submit</p>
+          <h2 data-i18n="add.title">Add a property</h2>
+        </div>
+        <button class="ghost-button" id="cancelAddListingButton" type="button" data-i18n="add.cancel">Cancel</button>
+      </div>
+
+      <form class="listing-form" id="addListingForm">
+        <label>
+          <span data-i18n="add.listingType">Listing type</span>
+          <select name="Listing_type" id="listingTypeInput" required>
+            <option value="rent" data-i18n="common.rent">Rent</option>
+            <option value="sale" data-i18n="common.sale">Sale</option>
+          </select>
+        </label>
+
+        <label>
+          <span data-i18n="add.location">Location</span>
+          <input name="Location" placeholder="Area, Amman, Jordan" data-i18n-placeholder="add.locationPlaceholder"
+            dir="auto" required />
+        </label>
+
+        <label>
+          <span data-i18n="add.bedrooms">Bedrooms</span>
+          <input name="Bedrooms" type="number" min="0" required />
+        </label>
+
+        <label>
+          <span data-i18n="add.bathrooms">Bathrooms</span>
+          <input name="Bathrooms" type="number" min="0" required />
+        </label>
+
+        <label>
+          <span data-i18n="add.areaSqm">Area sqm</span>
+          <input name="Area_sqm" type="number" min="1" step="0.1" required />
+        </label>
+
+        <label>
+          <span data-i18n="add.salePrice">Sale price</span>
+          <input name="Sale_price" id="salePriceInput" type="number" min="0" step="0.1" />
+        </label>
+
+        <label>
+          <span data-i18n="add.annualRentPrice">Annual rent price</span>
+          <input name="Price_annualy" id="annualPriceInput" type="number" min="0" step="0.1" />
+        </label>
+
+        <label>
+          <span data-i18n="add.floor">Floor</span>
+          <input name="Floor" placeholder="First floor" data-i18n-placeholder="add.floorPlaceholder" dir="auto"
+            required />
+        </label>
+
+        <label>
+          <span data-i18n="add.floorType">Floor type</span>
+          <input name="Floor_type" placeholder="Normal" data-i18n-placeholder="add.floorTypePlaceholder" dir="auto"
+            required />
+        </label>
+
+        <label>
+          <span data-i18n="add.furnished">Furnished</span>
+          <select name="Furnished" required>
+            <option value="false" data-i18n="common.no">No</option>
+            <option value="true" data-i18n="common.yes">Yes</option>
+          </select>
+        </label>
+
+        <label>
+          <span data-i18n="add.pool">Pool</span>
+          <select name="Pool" required>
+            <option value="false" data-i18n="common.no">No</option>
+            <option value="true" data-i18n="common.yes">Yes</option>
+          </select>
+        </label>
+
+        <label class="full-width">
+          <span data-i18n="add.description">Description</span>
+          <textarea name="Description" rows="4" dir="auto" required></textarea>
+        </label>
+
+        <label class="full-width">
+          <span data-i18n="add.specialities">Specialities</span>
+          <textarea name="Specialities" rows="4" dir="auto" required></textarea>
+        </label>
+
+        <div class="form-actions full-width">
+          <p class="form-message" id="formMessage"></p>
+          <button class="primary-button" type="submit" data-i18n="add.submit">Submit listing</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-brand">bytML</p>
+      <p class="footer-copy" data-i18n="footer.copy">Smart real estate discovery for Jordan.</p>
+      <p class="footer-meta" data-i18n="footer.rights">© 2026 bytML. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="./app.js"></script>
+</body>
+
+</html>
